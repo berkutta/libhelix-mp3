@@ -44,6 +44,12 @@
 #include "coder.h"
 #include "assembly.h"
 
+#ifdef __riscv
+#include "CH58x_common.h"
+#else
+#define __HIGH_CODE
+#endif
+
 typedef int ARRAY3[3];	/* for short-block reordering */
 
 /* optional pre-emphasis for high-frequency scale factor bands */
@@ -129,7 +135,7 @@ int pow2frac[8] = {
  *
  * Return:      bitwise-OR of the unsigned outputs (for guard bit calculations)
  **************************************************************************************/
-static int DequantBlock(int *inbuf, int *outbuf, int num, int scale)
+__HIGH_CODE static int DequantBlock(int *inbuf, int *outbuf, int num, int scale)
 {
 	int tab4[4];
 	int scalef, scalei, shift;
@@ -241,7 +247,7 @@ static int DequantBlock(int *inbuf, int *outbuf, int num, int scale)
  *
  * Notes:       dequantized samples in Q(DQ_FRACBITS_OUT) format 
  **************************************************************************************/
-int DequantChannel(int *sampleBuf, int *workBuf, int *nonZeroBound, FrameHeader *fh, SideInfoSub *sis, 
+__HIGH_CODE int DequantChannel(int *sampleBuf, int *workBuf, int *nonZeroBound, FrameHeader *fh, SideInfoSub *sis, 
 					ScaleFactorInfoSub *sfis, CriticalBandInfo *cbi)
 {
 	int i, j, w, cb;

@@ -43,6 +43,12 @@
 
 #include "coder.h"
 
+#ifdef __riscv
+#include "CH58x_common.h"
+#else
+#define __HIGH_CODE
+#endif
+
 /* helper macros - see comments in hufftabs.c about the format of the huffman tables */
 #define GetMaxbits(x)   ((int)( (((unsigned short)(x)) >>  0) & 0x000f))
 #define GetHLen(x)      ((int)( (((unsigned short)(x)) >> 12) & 0x000f))
@@ -80,7 +86,7 @@
  *                necessarily all linBits outputs for x,y > 15)
  **************************************************************************************/
 // no improvement with section=data
-static int DecodeHuffmanPairs(int *xy, int nVals, int tabIdx, int bitsLeft, unsigned char *buf, int bitOffset)
+__HIGH_CODE static int DecodeHuffmanPairs(int *xy, int nVals, int tabIdx, int bitsLeft, unsigned char *buf, int bitOffset)
 {
 	int i, x, y;
 	int cachedBits, padBits, len, startBits, linBits, maxBits, minBits;
@@ -284,7 +290,7 @@ static int DecodeHuffmanPairs(int *xy, int nVals, int tabIdx, int bitsLeft, unsi
  * Notes:        si_huff.bit tests every vwxy output in both quad tables
  **************************************************************************************/
 // no improvement with section=data
-static int DecodeHuffmanQuads(int *vwxy, int nVals, int tabIdx, int bitsLeft, unsigned char *buf, int bitOffset)
+__HIGH_CODE static int DecodeHuffmanQuads(int *vwxy, int nVals, int tabIdx, int bitsLeft, unsigned char *buf, int bitOffset)
 {
 	int i, v, w, x, y;
 	int len, maxBits, cachedBits, padBits;
@@ -377,7 +383,7 @@ static int DecodeHuffmanQuads(int *vwxy, int nVals, int tabIdx, int bitsLeft, un
  *                out of bits prematurely (invalid bitstream)
  **************************************************************************************/
 // .data about 1ms faster per frame
-int DecodeHuffman(MP3DecInfo *mp3DecInfo, unsigned char *buf, int *bitOffset, int huffBlockBits, int gr, int ch)
+__HIGH_CODE int DecodeHuffman(MP3DecInfo *mp3DecInfo, unsigned char *buf, int *bitOffset, int huffBlockBits, int gr, int ch)
 {
 	int r1Start, r2Start, rEnd[4];	/* region boundaries */
 	int i, w, bitsUsed, bitsLeft;

@@ -45,6 +45,12 @@
 #include "coder.h"
 #include "assembly.h"
 
+#ifdef __riscv
+#include "CH58x_common.h"
+#else
+#define __HIGH_CODE
+#endif
+
 #define COS0_0  0x4013c251	/* Q31 */
 #define COS0_1  0x40b345bd	/* Q31 */
 #define COS0_2  0x41fa2d6d	/* Q31 */
@@ -82,7 +88,7 @@
 #define COS4_0  0x5a82799a	/* Q31 */
 
 // faster in ROM
-static const int dcttab[48] = {
+static const int dcttab[48] __attribute__((section(".data"))) = {
 	/* first pass */
 	COS0_0, COS0_15, COS1_0,	/* 31, 27, 31 */
 	COS0_1, COS0_14, COS1_1,	/* 31, 29, 31 */
@@ -140,8 +146,7 @@ static const int dcttab[48] = {
  *              possibly interleave stereo (cut # of coef loads in half - may not have
  *                enough registers)
  **************************************************************************************/
-// about 1ms faster in RAM
-void FDCT32(int *buf, int *dest, int offset, int oddBlock, int gb)
+__HIGH_CODE void FDCT32(int *buf, int *dest, int offset, int oddBlock, int gb)
 {
     int i, s, tmp, es;
     const int *cptr = dcttab;

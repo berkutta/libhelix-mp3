@@ -45,6 +45,12 @@
 #include "coder.h"
 #include "assembly.h"
 
+#ifdef __riscv
+#include "CH58x_common.h"
+#else
+#define __HIGH_CODE
+#endif
+
 /**************************************************************************************
  * Function:    Subband
  *
@@ -57,7 +63,7 @@
  *
  * Return:      0 on success,  -1 if null input pointers
  **************************************************************************************/
-int Subband(MP3DecInfo *mp3DecInfo, short *pcmBuf)
+__HIGH_CODE int Subband(MP3DecInfo *mp3DecInfo, short *pcmBuf)
 {
 	int b;
 	HuffmanInfo *hi;

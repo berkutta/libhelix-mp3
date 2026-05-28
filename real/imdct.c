@@ -45,6 +45,12 @@
 #include "coder.h"
 #include "assembly.h"
 
+#ifdef __riscv
+#include "CH58x_common.h"
+#else
+#define __HIGH_CODE
+#endif
+
 /**************************************************************************************
  * Function:    AntiAlias
  *
@@ -70,7 +76,7 @@
  *                 gain from AntiAlias < 2.0)
  **************************************************************************************/
 // a little bit faster in RAM (< 1 ms per block)
-static void AntiAlias(int *x, int nBfly)
+__HIGH_CODE static void AntiAlias(int *x, int nBfly)
 {
 	int k, a0, b0, c0, c1;
 	const int *c;
@@ -130,7 +136,7 @@ static void AntiAlias(int *x, int nBfly)
  *              all blocks gain at least 1 guard bit via window (long blocks get extra
  *                sign bit, short blocks can have one addition but max gain < 1.0)
  **************************************************************************************/
-static void WinPrevious(int *xPrev, int *xPrevWin, int btPrev)
+__HIGH_CODE static void WinPrevious(int *xPrev, int *xPrevWin, int btPrev)
 {
 	int i, x, *xp, *xpwLo, *xpwHi, wLo, wHi;
 	const int *wpLo, *wpHi;
@@ -183,7 +189,7 @@ static void WinPrevious(int *xPrev, int *xPrevWin, int btPrev)
  *
  * Return:      updated mOut (from new outputs y)
  **************************************************************************************/
-static int FreqInvertRescale(int *y, int *xPrev, int blockIdx, int es)
+__HIGH_CODE static int FreqInvertRescale(int *y, int *xPrev, int blockIdx, int es)
 {
 	int i, d, mOut;
 	int y0, y1, y2, y3, y4, y5, y6, y7, y8;
@@ -245,11 +251,11 @@ static int FreqInvertRescale(int *y, int *xPrev, int blockIdx, int es)
  * float c4 = sin(2*u);
  */
 
-static const int c9_0 = 0x6ed9eba1;
-static const int c9_1 = 0x620dbe8b;
-static const int c9_2 = 0x163a1a7e;
-static const int c9_3 = 0x5246dd49;
-static const int c9_4 = 0x7e0e2e32;
+static const int c9_0 __attribute__((section(".data"))) = 0x6ed9eba1;
+static const int c9_1 __attribute__((section(".data"))) = 0x620dbe8b;
+static const int c9_2 __attribute__((section(".data"))) = 0x163a1a7e;
+static const int c9_3 __attribute__((section(".data"))) = 0x5246dd49;
+static const int c9_4 __attribute__((section(".data"))) = 0x7e0e2e32;
 
 /* format = Q31
  * cos(((0:8) + 0.5) * (pi/18)) 
@@ -259,7 +265,7 @@ static const int c18[9] = {
 };
 
 /* require at least 3 guard bits in x[] to ensure no overflow */
-static __inline void idct9(int *x)
+static __inline __HIGH_CODE void idct9(int *x)
 {
 	int a1, a2, a3, a4, a5, a6, a7, a8, a9;
 	int a10, a11, a12, a13, a14, a15, a16, a17, a18;
@@ -329,7 +335,7 @@ static __inline void idct9(int *x)
  *      fastWin[2*j+1] = c(j)*(s(j) - c(j))
  * format = Q30
  */
-int fastWin36[18] = {
+int fastWin36[18] __attribute__((section(".data"))) = {
 	0x42aace8b, 0xc2e92724, 0x47311c28, 0xc95f619a, 0x4a868feb, 0xd0859d8c,
 	0x4c913b51, 0xd8243ea0, 0x4d413ccc, 0xe0000000, 0x4c913b51, 0xe7dbc161,
 	0x4a868feb, 0xef7a6275, 0x47311c28, 0xf6a09e67, 0x42aace8b, 0xfd16d8dd,
@@ -368,7 +374,7 @@ int fastWin36[18] = {
  *                inline asm may or may not be helpful)
  **************************************************************************************/
 // barely faster in RAM
-static int IMDCT36(int *xCurr, int *xPrev, int *y, int btCurr, int btPrev, int blockIdx, int gb)
+__HIGH_CODE static int IMDCT36(int *xCurr, int *xPrev, int *y, int btCurr, int btPrev, int blockIdx, int gb)
 {
 	int i, es, xBuf[18], xPrevWin[18];
 	int acc1, acc2, s, d, t, mOut;
@@ -465,13 +471,13 @@ static int IMDCT36(int *xCurr, int *xPrev, int *y, int btCurr, int btPrev, int b
 	return mOut;
 }
 
-static int c3_0 = 0x6ed9eba1;	/* format = Q31, cos(pi/6) */
-static int c6[3] = { 0x7ba3751d, 0x5a82799a, 0x2120fb83 };	/* format = Q31, cos(((0:2) + 0.5) * (pi/6)) */
+static int c3_0 __attribute__((section(".data"))) = 0x6ed9eba1;	/* format = Q31, cos(pi/6) */
+static int c6[3] __attribute__((section(".data"))) = { 0x7ba3751d, 0x5a82799a, 0x2120fb83 };	/* format = Q31, cos(((0:2) + 0.5) * (pi/6)) */
 
 /* 12-point inverse DCT, used in IMDCT12x3() 
  * 4 input guard bits will ensure no overflow
  */
-static __inline void imdct12 (int *x, int *out)
+static __inline __HIGH_CODE void imdct12 (int *x, int *out)
 {
 	int a0, a1, a2;
 	int x0, x1, x2, x3, x4, x5;
@@ -537,7 +543,7 @@ static __inline void imdct12 (int *x, int *out)
  * TODO:        optimize for ARM
  **************************************************************************************/
  // barely faster in RAM
-static int IMDCT12x3(int *xCurr, int *xPrev, int *y, int btPrev, int blockIdx, int gb)
+__HIGH_CODE static int IMDCT12x3(int *xCurr, int *xPrev, int *y, int btPrev, int blockIdx, int gb)
 {
 	int i, es, mOut, yLo, xBuf[18], xPrevWin[18];	/* need temp buffer for reordering short blocks */
 	const int *wp;
@@ -619,7 +625,7 @@ static int IMDCT12x3(int *xCurr, int *xPrev, int *y, int btPrev, int blockIdx, i
  *
  * TODO:        examine mixedBlock/winSwitch logic carefully (test he_mode.bit)
  **************************************************************************************/
-static int HybridTransform(int *xCurr, int *xPrev, int y[BLOCK_SIZE][NBANDS], SideInfoSub *sis, BlockCount *bc)
+__HIGH_CODE static int HybridTransform(int *xCurr, int *xPrev, int y[BLOCK_SIZE][NBANDS], SideInfoSub *sis, BlockCount *bc)
 {
 	int xPrevWin[18], currWinIdx, prevWinIdx;
 	int i, j, nBlocksOut, nonZero, mOut;
@@ -719,7 +725,7 @@ static int HybridTransform(int *xCurr, int *xPrev, int y[BLOCK_SIZE][NBANDS], Si
  * Return:      0 on success,  -1 if null input pointers
  **************************************************************************************/
  // a bit faster in RAM
-int IMDCT(MP3DecInfo *mp3DecInfo, int gr, int ch)
+__HIGH_CODE int IMDCT(MP3DecInfo *mp3DecInfo, int gr, int ch)
 {
 	int nBfly, blockCutoff;
 	FrameHeader *fh;

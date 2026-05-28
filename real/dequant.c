@@ -45,6 +45,12 @@
 #include "coder.h"
 #include "assembly.h"
 
+#ifdef __riscv
+#include "CH58x_common.h"
+#else
+#define __HIGH_CODE
+#endif
+
 /**************************************************************************************
  * Function:    Dequantize
  *
@@ -70,7 +76,7 @@
  *              Equivalently, we can think of the dequantized coefficients as 
  *                Q(DQ_FRACBITS_OUT - 15) with no implicit bias. 
  **************************************************************************************/
-int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
+__HIGH_CODE int Dequantize(MP3DecInfo *mp3DecInfo, int gr)
 {
 	int i, ch, nSamps, mOut[2];
 	FrameHeader *fh;
